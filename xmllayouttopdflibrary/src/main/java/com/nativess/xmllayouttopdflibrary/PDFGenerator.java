@@ -1,14 +1,32 @@
 package com.nativess.xmllayouttopdflibrary;
 
-import android.graphics.Bitmap;
+import android.app.Activity;
+import android.view.View;
 
-public interface PDFGenerator {
+public class PDFGenerator implements Generator {
+    private final GeneratorImpl pdfGenerator;
 
-    boolean openPdfFile();
+    public PDFGenerator(final Activity activity, final PDFBuilder builder) {
+        pdfGenerator = new GeneratorImpl(activity, builder);
+    }
 
-    boolean savePdf(int pdfLayout);
+    @Override
+    public boolean openPdfFile() {
+        return pdfGenerator.openPdfFile();
+    }
 
-    boolean savePdf(Bitmap bitmap);
+    @Override
+    public boolean savePdf(int pdfLayout) {
+        return pdfGenerator.savePdf(pdfLayout);
+    }
 
-    boolean attachPdfToEmail();
+    @Override
+    public boolean savePdf(View view) {
+        return pdfGenerator.savePdf(view);
+    }
+
+    @Override
+    public boolean attachPdfToEmail() {
+        return pdfGenerator.attachPdfToEmail();
+    }
 }

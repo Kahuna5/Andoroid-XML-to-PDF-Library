@@ -2,7 +2,7 @@ package com.nativess.xmllayouttopdflibrary;
 
 import android.os.Environment;
 
-public class PdfBuilder {
+public class PDFBuilder {
 
     //region Constants
     private static final String DIRECTORY_FOLDER_NAME = "/PDF/";
@@ -17,7 +17,7 @@ public class PdfBuilder {
     //region Field variables
     private int pdfPageWidth;
     private int pdfPageHeight;
-    private int pdfPageNumber;
+    private final int pdfPageNumber;
     private String filename;
     private String directoryPath;
     private String email;
@@ -26,7 +26,7 @@ public class PdfBuilder {
     //endregion
 
     //region Constructor
-    public PdfBuilder() {
+    public PDFBuilder() {
         directoryPath = Environment.getExternalStorageDirectory().toString() + "/"
                 + Environment.DIRECTORY_DOCUMENTS + "/"
                 + BuildConfig.LIBRARY_PACKAGE_NAME + DIRECTORY_FOLDER_NAME;
@@ -41,38 +41,39 @@ public class PdfBuilder {
     //endregion
 
     //region Setters
-    public PdfBuilder setPageWidth(final int pdfPageWidth) {
+    public PDFBuilder setPageWidth(final int pdfPageWidth) {
         this.pdfPageWidth = pdfPageWidth;
         return this;
     }
 
-    public PdfBuilder setPageHeight(final int pdfPageHeight) {
+    public PDFBuilder setPageHeight(final int pdfPageHeight) {
         this.pdfPageHeight = pdfPageHeight;
         return this;
     }
 
-    public PdfBuilder setPdfFileName(final String filename) {
-        //todo: append .pdf
-        this.filename = filename;
+    public PDFBuilder setPdfFileName(final String filename) {
+        LogUtil.i("PDFBuilder: setPdfFileName: Appending .pdf to the fileName");
+        this.filename = filename + ".pdf";
         return this;
     }
 
-    public PdfBuilder setDirectoryPath(final String directoryPath) {
+    public PDFBuilder setDirectoryPath(final String directoryPath) {
+        LogUtil.i("PDFBuilder: setDirectoryPath: setting directory path");
         this.directoryPath = directoryPath;
         return this;
     }
 
-    public PdfBuilder setEmail(final String email) {
+    public PDFBuilder setEmail(final String email) {
         this.email = email;
         return this;
     }
 
-    public PdfBuilder setEmailSubject(final String emailSubject) {
+    public PDFBuilder setEmailSubject(final String emailSubject) {
         this.emailSubject = emailSubject;
         return this;
     }
 
-    public PdfBuilder setEmailText(final String emailText) {
+    public PDFBuilder setEmailText(final String emailText) {
         this.emailText = emailText;
         return this;
     }

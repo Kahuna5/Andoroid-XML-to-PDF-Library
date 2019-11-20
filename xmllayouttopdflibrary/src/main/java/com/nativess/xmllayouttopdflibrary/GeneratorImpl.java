@@ -19,23 +19,23 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
-public class PDFGeneratorImpl implements PDFGenerator {
+public class GeneratorImpl implements Generator {
 
-    private PdfBuilder mPdfBuilder;
-    private Activity activity;
+    private final PDFBuilder mPDFBuilder;
+    private final Activity activity;
 
-    public PDFGeneratorImpl(final Activity activity, final PdfBuilder builder) {
-        this.mPdfBuilder = builder;
+    GeneratorImpl(final Activity activity, final PDFBuilder builder) {
+        this.mPDFBuilder = builder;
         this.activity = activity;
     }
 
     @Override
     public boolean openPdfFile() {
-        final String filename = mPdfBuilder.getFilename();
-        final String directoryPath = mPdfBuilder.getDirectoryPath();
+        final String filename = mPDFBuilder.getFilename();
+        final String directoryPath = mPDFBuilder.getDirectoryPath();
         final File file = new File(directoryPath + filename);
         if (!file.exists()) {
-            LogUtil.e("PDFGeneratorImpl: openPdfFile: Exception: pdf does not exist.");
+            LogUtil.e("GeneratorImpl: openPdfFile: Exception: pdf does not exist.");
             return false;
         }
         final String AUTHORITY = BuildConfig.LIBRARY_PACKAGE_NAME + ".provider";
@@ -56,16 +56,16 @@ public class PDFGeneratorImpl implements PDFGenerator {
 
     @Override
     public boolean savePdf(final int pdfLayout) {
-        final Bitmap bitmap = createClusterBitmap(pdfLayout);
-        return savePdf(bitmap);
+        final View layoutView = getMeasuredViewFromLayoutId(pdfLayout);
+        return savePdf(layoutView);
     }
 
     @Override
-    public boolean savePdf(final Bitmap bitmap) {
+    public boolean savePdf(final View view) {
         if (hasReadAndWritePermissions()) {
-            final String filename = mPdfBuilder.getFilename();
-            final String directoryPath = mPdfBuilder.getDirectoryPath();
-            final PdfDocument pdfDocument = bitmapToPdf(bitmap);
+            final String filename = mPDFBuilder.getFilename();
+            final String directoryPath = mPDFBuilder.getDirectoryPath();
+            final PdfDocument pdfDocument = bitmapToPdf(viewToBitmap(view));
             if (pdfDocument != null) {
                 final File file = new File(directoryPath + filename);
 
@@ -73,7 +73,7 @@ public class PDFGeneratorImpl implements PDFGenerator {
                 final File mediaStorageDir = new File(directoryPath);
                 if (!mediaStorageDir.exists()) {
                     boolean result = mediaStorageDir.mkdirs();
-                    LogUtil.d("PDFGeneratorImpl: savePdf: mediaStorageDir.mkdirs: " + result);
+                    LogUtil.d("GeneratorImpl: savePdf: mediaStorageDir.mkdirs: " + result);
                 }
 
                 // write the document content
@@ -93,16 +93,16 @@ public class PDFGeneratorImpl implements PDFGenerator {
                     return false;
                 }
 
-                LogUtil.e("PDFGeneratorImpl: savePdf: Exception: Unknown exception. " +
+                LogUtil.e("GeneratorImpl: savePdf: Exception: Unknown exception. " +
                         "Could not save pdf file to external storage. ");
                 pdfDocument.close();
                 return false;
             } else {
-                LogUtil.e("PDFGeneratorImpl: savePdf: Exception: Pdf Document is null. ");
+                LogUtil.e("GeneratorImpl: savePdf: Exception: Pdf Document is null. ");
                 return false;
             }
         } else {
-            LogUtil.e("PDFGeneratorImpl: savePdf: Exception: \n" +
+            LogUtil.e("GeneratorImpl: savePdf: Exception: \n" +
                     "********************** \n" +
                     "PERMISSIONS NOT GRANTED!! \n" +
                     "********************** \n" +
@@ -114,11 +114,11 @@ public class PDFGeneratorImpl implements PDFGenerator {
 
     @Override
     public boolean attachPdfToEmail() {
-        final String filename = mPdfBuilder.getFilename();
-        final String directoryPath = mPdfBuilder.getDirectoryPath();
-        final String email = mPdfBuilder.getEmail();
-        final String emailSubject = mPdfBuilder.getEmailSubject();
-        final String emailText = mPdfBuilder.getEmailText();
+        final String filename = mPDFBuilder.getFilename();
+        final String directoryPath = mPDFBuilder.getDirectoryPath();
+        final String email = mPDFBuilder.getEmail();
+        final String emailSubject = mPDFBuilder.getEmailSubject();
+        final String emailText = mPDFBuilder.getEmailText();
 
         final File file = new File(directoryPath + filename);
         final String AUTHORITY = BuildConfig.LIBRARY_PACKAGE_NAME + ".provider";
@@ -156,9 +156,9 @@ public class PDFGeneratorImpl implements PDFGenerator {
      */
     private PdfDocument bitmapToPdf(final Bitmap bitmap) {
         if (bitmap != null) {
-            final int pdfPageWidth = mPdfBuilder.getPdfPageWidth();
-            final int pdfPageHeight = mPdfBuilder.getPdfPageHeight();
-            final int pdfPageNumber = mPdfBuilder.getPdfPageNumber();
+            final int pdfPageWidth = mPDFBuilder.getPdfPageWidth();
+            final int pdfPageHeight = mPDFBuilder.getPdfPageHeight();
+            final int pdfPageNumber = mPDFBuilder.getPdfPageNumber();
 
             /* GENERATE PDF */
             final PdfDocument document = new PdfDocument();
@@ -179,18 +179,40 @@ public class PDFGeneratorImpl implements PDFGenerator {
             return document;
 
         } else {
-            LogUtil.e("PDFGeneratorImpl: bitmapToPdf: Exception: Bitmap is null. ");
+            LogUtil.e("GeneratorImpl: bitmapToPdf: Exception: Bitmap is null. ");
             return null;
         }
     }
 
     /**
-     * Generates a bitmap image from an XML layout.
+     * Generates a bitmap from a View object.
+     *
+     * @param view, any view object.
+     * @return Bitmap, bitmap image.
+     */
+    private Bitmap viewToBitmap(final View view) {
+
+        view.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+        view.layout(0, 0, view.getMeasuredWidth(),
+                view.getMeasuredHeight());
+
+        //Create the bitmap.
+        final Bitmap clusterBitmap = Bitmap.createBitmap(view.getMeasuredWidth(),
+                view.getMeasuredHeight(), Bitmap.Config.ARGB_8888);
+        final Canvas canvas = new Canvas(clusterBitmap);
+        view.draw(canvas);
+
+        return clusterBitmap;
+    }
+
+    /**
+     * Returns a measured view from a layout id.
      *
      * @param pdfLayout, xml layout.
-     * @return Bitmap, image.
+     * @return View, layout view.
      */
-    private Bitmap createClusterBitmap(final int pdfLayout) {
+    private View getMeasuredViewFromLayoutId(final int pdfLayout) {
         final View invoiceLayout = LayoutInflater.from(activity).inflate(pdfLayout,
                 null);
 
@@ -200,13 +222,7 @@ public class PDFGeneratorImpl implements PDFGenerator {
         invoiceLayout.layout(0, 0, invoiceLayout.getMeasuredWidth(),
                 invoiceLayout.getMeasuredHeight());
 
-        //Create the bitmap.
-        final Bitmap clusterBitmap = Bitmap.createBitmap(invoiceLayout.getMeasuredWidth(),
-                invoiceLayout.getMeasuredHeight(), Bitmap.Config.ARGB_8888);
-        final Canvas canvas = new Canvas(clusterBitmap);
-        invoiceLayout.draw(canvas);
-
-        return clusterBitmap;
+        return invoiceLayout;
     }
 
     /**
