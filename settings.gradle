@@ -1,0 +1,2 @@
+include ':app', ':xmllayouttopdflibrary'
+rootProject.name='XMLto PDF Library'
