@@ -19,7 +19,7 @@ All the neccessary fields for building a PDF have default values.
                 .setPageHeight(1800)
                 .setEmail("dave@live.com")
                 .setEmailSubject("Subject test")
-                .setPdfFileName("testName.pdf")
+                .setPdfFileName("testName")
                 .setEmailText("email body");
 ```
 After that call the PDFGenerator(Context, PDFBuilder).
@@ -32,7 +32,7 @@ And save the PDF.
 savePdf can take an int [the xml layout id]:
 
 ``` java
-generator.savePdf(R.layoyt.my_layout);
+generator.savePdf(R.layout.my_layout);
 ```
 
  or a VIEW as a parameter:
