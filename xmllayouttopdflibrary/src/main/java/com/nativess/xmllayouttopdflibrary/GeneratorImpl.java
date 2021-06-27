@@ -1,10 +1,8 @@
 package com.nativess.xmllayouttopdflibrary;
 
-import android.Manifest;
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.pdf.PdfDocument;
@@ -12,7 +10,6 @@ import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
 
-import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 
 import java.io.File;
@@ -62,54 +59,43 @@ public class GeneratorImpl implements Generator {
 
     @Override
     public boolean savePdf(final View view) {
-        if (hasReadAndWritePermissions()) {
-            final String filename = mPDFBuilder.getFilename();
-            final String directoryPath = mPDFBuilder.getDirectoryPath();
-            final PdfDocument pdfDocument = bitmapToPdf(viewToBitmap(view));
-            if (pdfDocument != null) {
-                final File file = new File(directoryPath + filename);
+        final String filename = mPDFBuilder.getFilename();
+        final String directoryPath = mPDFBuilder.getDirectoryPath();
+        final PdfDocument pdfDocument = bitmapToPdf(viewToBitmap(view));
+        if (pdfDocument != null) {
+            final File file = new File(directoryPath + filename);
 
-                //If folder does not exist, create folder.
-                final File mediaStorageDir = new File(directoryPath);
-                if (!mediaStorageDir.exists()) {
-                    boolean result = mediaStorageDir.mkdirs();
-                    LogUtil.d("GeneratorImpl: savePdf: mediaStorageDir.mkdirs: " + result);
-                }
+            //If folder does not exist, create folder.
+            final File mediaStorageDir = new File(directoryPath);
+            if (!mediaStorageDir.exists()) {
+                boolean result = mediaStorageDir.mkdirs();
+                LogUtil.d("GeneratorImpl: savePdf: mediaStorageDir.mkdirs: " + result);
+            }
 
-                // write the document content
-                try {
-                    FileOutputStream fos = new FileOutputStream(file);
-                    if (file.exists()) {
-                        pdfDocument.writeTo(fos);
-                        LogUtil.d("Utils: bitmapToPdf: success");
-                        fos.flush();
-                        fos.close();
-                        pdfDocument.close();
-                        return true;
-                    }
-                } catch (IOException e) {
-                    LogUtil.e("Utils: bitmapToPdf: Exception: " + e);
+            // write the document content
+            try {
+                FileOutputStream fos = new FileOutputStream(file);
+                if (file.exists()) {
+                    pdfDocument.writeTo(fos);
+                    LogUtil.d("Utils: bitmapToPdf: success");
+                    fos.flush();
+                    fos.close();
                     pdfDocument.close();
-                    return false;
+                    return true;
                 }
-
-                LogUtil.e("GeneratorImpl: savePdf: Exception: Unknown exception. " +
-                        "Could not save pdf file to external storage. ");
+            } catch (IOException e) {
+                LogUtil.e("Utils: bitmapToPdf: Exception: " + e);
                 pdfDocument.close();
                 return false;
-            } else {
-                LogUtil.e("GeneratorImpl: savePdf: Exception: Pdf Document is null. ");
-                return false;
             }
+
+            LogUtil.e("GeneratorImpl: savePdf: Exception: Unknown exception. " +
+                    "Could not save pdf file to external storage. ");
+            pdfDocument.close();
         } else {
-            LogUtil.e("GeneratorImpl: savePdf: Exception: \n" +
-                    "********************** \n" +
-                    "PERMISSIONS NOT GRANTED!! \n" +
-                    "********************** \n" +
-                    "READ AND WRITE PERMISSIONS ARE REQUIRED TO SAVE PDF TO EXTERNAL STORAGE. " +
-                    "********************** \n");
-            return false;
+            LogUtil.e("GeneratorImpl: savePdf: Exception: Pdf Document is null. ");
         }
+        return false;
     }
 
     @Override
@@ -223,22 +209,6 @@ public class GeneratorImpl implements Generator {
                 invoiceLayout.getMeasuredHeight());
 
         return invoiceLayout;
-    }
-
-    /**
-     * Read an write permissions are required for saving a file to the external storage.
-     * This method checks if permissions are granted.
-     *
-     * @return boolean, true if granted.
-     */
-    private boolean hasReadAndWritePermissions() {
-        final boolean readPermission = ContextCompat.checkSelfPermission(activity,
-                Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
-
-        final boolean writePermission = ContextCompat.checkSelfPermission(activity,
-                Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
-
-        return readPermission && writePermission;
     }
 
     //endregion
